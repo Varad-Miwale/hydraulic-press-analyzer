@@ -535,9 +535,20 @@ def generate_dashboard(out, here):
     ) as f:
         f.write(dashboard)
 
+    # Also write index.html for direct GitHub Pages deployment
+    index_file = os.path.join(here, "index.html")
+    with open(
+        index_file,
+        "w",
+        encoding="utf-8",
+        newline=""
+    ) as f:
+        f.write(dashboard)
+
     print()
     print("Dashboard created successfully:")
     print(f"  {output_file}")
+    print(f"  {index_file}")
 
 
 # ---------------------------------------------------------------------------
