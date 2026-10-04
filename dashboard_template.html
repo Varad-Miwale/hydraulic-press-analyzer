@@ -1,0 +1,398 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Hydraulic Press Analyzer – Group 2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  
+  /* Light Theme */
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --tx: #0f172a;
+  --mu: #64748b;
+  --bd: #e2e8f0;
+  --ac: #2563eb;
+  --ac-hover: #1d4ed8;
+  --ok: #16a34a;
+  --bad: #dc2626;
+  --warn: #d97706;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Dark Theme */
+    --bg: #0f172a;
+    --card: #1e293b;
+    --tx: #f8fafc;
+    --mu: #94a3b8;
+    --bd: #334155;
+    --ac: #3b82f6;
+    --ac-hover: #60a5fa;
+    --ok: #22c55e;
+    --bad: #ef4444;
+    --warn: #f59e0b;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  }
+}
+
+:root[data-theme="dark"] {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --tx: #f8fafc;
+    --mu: #94a3b8;
+    --bd: #334155;
+    --ac: #3b82f6;
+    --ac-hover: #60a5fa;
+    --ok: #22c55e;
+    --bad: #ef4444;
+    --warn: #f59e0b;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+}
+
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--tx);
+  font: 14px/1.6 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.01em; }
+h3 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; }
+p.s, .note { color: var(--mu); font-size: 13px; margin: 4px 0 12px; line-height: 1.5; }
+
+nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0; }
+nav button {
+  background: var(--card);
+  color: var(--tx);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+nav button:hover { border-color: var(--ac); color: var(--ac); transform: translateY(-1px); }
+nav button.on {
+  background: var(--ac);
+  color: #fff;
+  border-color: var(--ac);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s ease;
+}
+.card:hover { box-shadow: var(--shadow-hover); }
+
+.tab { display: none; animation: fadeIn 0.3s ease-in-out; }
+.tab.on { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.sc { overflow-x: auto; padding-bottom: 8px; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { border-bottom: 1px solid var(--bd); padding: 12px 14px; text-align: left; vertical-align: top; }
+th { font-weight: 600; color: var(--mu); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+tr:hover td { background: rgba(0,0,0,0.02); }
+@media (prefers-color-scheme: dark) { tr:hover td { background: rgba(255,255,255,0.02); } }
+td.n { text-align: right; font-variant-numeric: tabular-nums; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 16px 0; }
+.kpi {
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 16px;
+  transition: transform 0.2s ease;
+}
+.kpi:hover { transform: translateY(-2px); }
+.kpi b { font-size: 22px; display: block; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tx); margin-top: 6px; }
+.kpi .note { margin: 0; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+
+select, input, button.b {
+  font: inherit;
+  color: var(--tx);
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+select:hover, input:hover, button.b:hover { border-color: var(--mu); }
+select:focus, input:focus { outline: none; border-color: var(--ac); box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+button.b { cursor: pointer; font-weight: 500; background: var(--card); }
+button.b:hover { background: var(--bg); color: var(--ac); }
+
+.al { padding: 12px 16px; border-radius: 8px; font-weight: 500; font-size: 14px; border: 1px solid transparent; }
+.ok { background: #22c55e1a; color: var(--ok); border-color: #22c55e33; }
+.bad { background: #ef44441a; color: var(--bad); border-color: #ef444433; }
+.warn { background: #f59e0b1a; color: var(--warn); border-color: #f59e0b33; }
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin-left: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f59e0b11;
+}
+
+.pipe { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pipe span {
+  border: 1px solid var(--bd);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg);
+  color: var(--tx);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+.pipe i { color: var(--mu); font-style: normal; font-size: 14px; }
+
+#rail { position: relative; height: 200px; width: 64px; background: var(--bg); border: 1px solid var(--bd); border-radius: 32px; margin: 0 auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+#ram { position: absolute; left: 3px; width: 56px; height: 32px; background: var(--ac); border-radius: 16px; top: 4px; transition: top 0.05s linear; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+canvas { max-height: 280px; }
+.interp { border-left: 3px solid var(--ac); padding: 8px 16px; margin: 16px 0 0; font-size: 13.5px; background: var(--bg); border-radius: 0 8px 8px 0; border: 1px solid var(--bd); border-left: 3px solid var(--ac); }
+ul { margin: 8px 0; padding-left: 24px; }
+li { margin-bottom: 6px; }
+</style></head><body><main>
+<h1>Hydraulic Press Analyzer <span class="badge">Group 2 · simulation results, not live data</span></h1>
+<p class="s">Danfoss hydraulic press assignment · three Hopsan concepts · stored simulation results replayed in the browser</p>
+<div class="kpis" id="kpis"></div>
+<nav id="nav"></nav>
+
+<section class="tab" id="t0">
+<div class="card"><h2>Overview</h2><div class="pipe" id="pipe"></div>
+<p class="note">This dashboard uses stored Hopsan simulation results and replays them. It is not live machine data, and no browser-to-Hopsan control is implemented.</p></div>
+<div class="card"><h2>Group 2 requirements</h2><table id="req"></table><p class="note">Targets and cycle parameters specified in the Danfoss Group 2 assignment brief.</p></div>
+<div class="card"><h2>Model &amp; data validation</h2><div class="sc"><table id="val"></table></div></div>
+<div class="card"><div class="row"><h2 style="margin:0">Cycle replay</h2><span class="badge">Simulation replay values</span><label>Circuit <select id="cs"></select></label><button class="b" id="play">▶ Play</button><input type="range" id="sl" min="0" max="280" value="0" step="any" style="flex:1;min-width:140px"><b id="tt">0.0 s</b></div>
+<div class="row" style="align-items:stretch;margin-top:8px"><div style="flex:0 0 140px;text-align:center"><div id="rail"><div id="ram"></div></div><div class="al warn" id="ph" style="margin-top:8px;font-size:13px"></div></div><div style="flex:1;min-width:260px"><canvas id="cyc"></canvas></div></div>
+<div class="row" id="live" style="margin-top:8px"></div></div>
+<div class="card" id="lim"><h2>Assumptions &amp; limitations</h2><ul>
+<li>Results are simulation-derived, not live machine measurements.</li><li>Sensor selections are conceptual categories, not verified components.</li><li>Anomaly faults are synthetically injected; the detector is a proof of concept.</li>
+<li>Simplicity/cost scores are preliminary team judgement; no component prices exist.</li><li>The 9 t load interpretation (tool force vs cylinder force) is unconfirmed.</li>
+<li>Circuit 2 energy uses an unverified Excel value because its CSV has one pressure for two pumps (see Circuit Comparison).</li><li>Hopsan automation is not claimed; it has not been implemented or tested.</li></ul></div>
+</section>
+
+<section class="tab" id="t1">
+<div class="card" id="rec"></div>
+<div class="card"><h2>Weighted Decision Matrix – User-Defined Priorities</h2><p class="note">Scores are normalised from simulation-derived metrics where applicable. The final ranking depends on the selected engineering priorities. <b>Cost/complexity is a preliminary engineering judgement, not a verified cost estimate.</b></p><div class="row" id="wts"></div><div id="recbody" class="sc"></div><h3>Ranking sensitivity</h3><div id="sens" class="sc"></div></div>
+<div class="card"><h2>Multi-Criteria Circuit Evaluation</h2><p class="note">Every value below is derived from the simulation result CSV, except where marked.</p><div class="sc" id="grp"></div></div>
+<div class="card"><h2>Strengths &amp; trade-offs</h2><div id="trade"></div></div>
+<div class="card"><canvas id="en"></canvas></div><div><div class="card"><canvas id="c1"></canvas></div><div class="card"><canvas id="c2"></canvas></div><div class="card"><canvas id="c3"></canvas></div><div class="card"><canvas id="c4"></canvas></div></div>
+</section>
+
+<section class="tab" id="t2">
+<div class="card"><div class="row"><h2 style="margin:0">Best Circuit – Detailed Performance</h2><label>Circuit <select id="bsel"></select></label></div><p class="note" id="bnote"></p></div>
+<div class="card sc"><h2>Target vs simulated</h2><table id="tva"></table><p class="note">The brief defines no tolerance bands, so none are invented; status labels only compare the simulated value with the target.</p></div>
+<div class="card"><canvas id="b1"></canvas><div class="interp">Position follows the four phases: fast approach, slow pressing, hold, then return. Stroke depth and the slope in each phase show whether the cycle matches the brief.</div></div>
+<div class="card"><canvas id="b2"></canvas><div class="interp">Speed is negative when the cylinder moves down. Dashed lines are the brief's target speeds. The oscillations at phase changes come from the abrupt valve commands in the model.</div></div>
+<div class="grid2"><div class="card"><canvas id="b3"></canvas></div><div class="card"><canvas id="b4"></canvas></div><div class="card"><canvas id="b5"></canvas></div></div>
+<div class="interp" style="margin:0 0 12px">Pressure rises during the working phase because the cylinder must generate the pressing force. Peak head/rod pressures indicate the load and circuit behaviour.</div>
+<div class="card"><canvas id="b6"></canvas><div class="interp">Fast motion needs far more flow than slow working for a given cylinder area. Supplying full pump flow during working can create bypass/relief losses.</div></div>
+<div class="grid2"><div class="card"><canvas id="b7"></canvas></div><div class="card"><canvas id="b8"></canvas></div></div>
+<div class="interp" id="eint" style="margin:0 0 12px"></div>
+<div class="card"><p class="note"><b>Hydraulic power:</b> P = p × Q &nbsp;·&nbsp; <b>Hydraulic energy:</b> E = ∫ p(t) × Q(t) dt. This is hydraulic energy at the pump; motor/electrical efficiency, the 0.9 pump efficiency and the 10 bar line loss are <b>not</b> added.</p></div>
+</section>
+
+<section class="tab" id="t3"><div class="card sc"><h2>Sensor mapping</h2><table><tr><th>Simulation signal</th><th>Real-world measurement</th><th>Sensor category</th><th>Purpose</th></tr>
+<tr><td>Pump pressure</td><td>Pump pressure</td><td>Pressure transmitter</td><td>Pressure monitoring</td></tr>
+<tr><td>Head pressure</td><td>Cylinder cap-side pressure</td><td>Pressure transmitter</td><td>Force/load monitoring</td></tr>
+<tr><td>Rod pressure</td><td>Cylinder rod-side pressure</td><td>Pressure transmitter</td><td>Return-side monitoring</td></tr>
+<tr><td>Pump flow</td><td>Hydraulic flow</td><td>Flow meter</td><td>Flow and energy analysis</td></tr>
+<tr><td>Position</td><td>Cylinder position</td><td>Magnetostrictive / LVDT / etc.</td><td>Stroke</td></tr>
+<tr><td>Velocity</td><td>Derived from position</td><td>Software calculation</td><td>Motion monitoring</td></tr>
+<tr><td>Oil temperature</td><td>Oil temperature</td><td>Temperature sensor</td><td>Thermal condition</td></tr></table>
+<p class="note">Sampling rate depends on the system dynamics, control requirements and interface limitations; no rate is specified here. Sensor models shown are representative categories, not a verified final component selection.</p></div>
+<div class="card"><div class="row"><label>Circuit <select id="cs2"></select></label></div><div class="grid2" style="margin-top: 16px;"><div><canvas id="s1"></canvas></div><div><canvas id="s2"></canvas></div></div></div></section>
+
+<section class="tab" id="t4"><div class="card"><h2 style="display:inline">Data Science – Anomaly Detection</h2><span class="badge">Proof of concept – simulated data</span>
+<p class="note">Workflow: normal simulation → reference signal → synthetic abnormality + noise → residual calculation → threshold detection. The method is a <b>statistical residual-based anomaly detector</b>, not trained machine learning, and does not claim predictive maintenance or failure prediction. The reference is the same simulation the fault is added to, so detection rates are not measured here.</p>
+<div class="row"><label>Circuit <select id="cs3"></select></label><label>Fault <select id="fs"><option value="leak">Head-side leak</option><option value="wear">Pump wear (lost flow)</option><option value="fric">Extra friction / sticking</option></select></label><label>Severity <input type="range" id="lk" min="0" max="10" value="3"></label><b id="lkv"></b></div>
+<div id="alert" class="al ok" style="margin-top:8px">No anomaly</div><p class="note" id="dt"></p></div>
+<div class="card"><canvas id="an"></canvas></div><div class="card"><canvas id="an2"></canvas></div><div class="card"><canvas id="an3"></canvas></div></section>
+
+<section class="tab" id="t5">
+<div class="card">
+  <h2>Hopsan Simulation Evidence</h2>
+  <p class="note">Hopsan simulation recordings used to generate the result data analysed in this dashboard. All three circuits share the same cylinder, load and duty cycle — only the hydraulic circuit topology differs.</p>
+</div>
+<div class="card">
+  <h3 style="margin:0 0 10px">Circuit 1 – Regenerative Counterbalancing</h3>
+  <video controls style="width:100%;border-radius:8px;max-height:420px;background:#000">
+    <source src="videos/Circuit1_Regenerative_counterbalancing.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p class="note" style="margin-top:8px">Regenerative circuit with counterbalance valve. Extends the cylinder rod-side oil back to the pump inlet during fast-down, reducing pump demand.</p>
+</div>
+<div class="card">
+  <h3 style="margin:0 0 10px">Circuit 2 – High-Low Pump</h3>
+  <video controls style="width:100%;border-radius:8px;max-height:420px;background:#000">
+    <source src="videos/Circuit2_High_Low_pump_results.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p class="note" style="margin-top:8px">Two-pump (high-low) system. Large low-pressure pump provides fast traverse flow; small high-pressure pump takes over during working stroke. Achieves the greatest energy saving (~79% vs Circuit 1).</p>
+</div>
+<div class="card">
+  <h3 style="margin:0 0 10px">Circuit 3 – Transverse and Feed + Meter Out</h3>
+  <video controls style="width:100%;border-radius:8px;max-height:420px;background:#000">
+    <source src="videos/Circuit3_Transverse_and_feed_meter_out.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p class="note" style="margin-top:8px">Meter-out speed control with transverse feed valve. Simplest topology; speed is controlled by throttling the return-side flow. Energy consumption is similar to Circuit 1.</p>
+</div>
+<div class="card"><h2>Data traceability</h2><div class="pipe" id="trace"></div><div class="sc"><table id="files" style="margin-top:8px"></table></div></div></section>
+
+<script>
+const D=__DATA__,$=id=>document.getElementById(id),F=(v,n=1)=>v==null||isNaN(v)?"–":(+v).toFixed(n),T=D[0].data.time_s;
+const COL=["#d62728","#1f77b4","#2ca02c","#9467bd","#ff7f0e"],css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const M=(i,k)=>D[i].metrics[k],EK="Pump hydraulic energy 2-11.35 s [kJ]",EK2="Pump hydraulic energy 0-14 s [kJ]";
+const PIPE=["Hopsan models","simulation","exported result data","Python analysis","performance metrics","circuit comparison","selected circuit","sensor mapping","anomaly detection"];
+$("pipe").innerHTML=PIPE.map(x=>"<span>"+x+"</span>").join("<i>→</i>");
+$("trace").innerHTML=["Hopsan .hmf model","Hopsan simulation","Exported result CSV","Python analysis (analyze.py)","Performance metrics","Dashboard"].map(x=>"<span>"+x+"</span>").join("<i>→</i>");
+// ---- tabs
+const TABS=["Overview","Circuit Comparison","Best Circuit","Sensors","Data Science","Simulation Evidence"];
+TABS.forEach((n,i)=>{const b=document.createElement("button");b.textContent=n;b.onclick=()=>show(i);$("nav").appendChild(b)});
+function show(i){document.querySelectorAll(".tab").forEach((e,j)=>e.classList.toggle("on",i==j));[...$("nav").children].forEach((b,j)=>b.classList.toggle("on",i==j));if(i==0)cyc();if(i==1)cmp();if(i==2)best_();if(i==3)sens();if(i==4)anom()}
+["cs","cs2","cs3","bsel"].forEach(id=>D.forEach((d,i)=>$(id).add(new Option(d.name,i))));
+// ---- chart helper
+let ch={};
+const PH=[[2,3,"Fast down","#d6272722"],[3,8.1,"Working","#2ca02c22"],[8.1,10,"Hold","#ff7f0e22"],[10,11.35,"Fast up","#1f77b422"]];
+const bands={id:"bands",beforeDraw(c){if(!c.options.bands)return;const x=c.scales.x,y=c.chartArea,g=c.ctx;PH.forEach(p=>{const a=x.getPixelForValue(T.findIndex(v=>v>=p[0])),b=x.getPixelForValue(T.findIndex(v=>v>=p[1]));g.fillStyle=p[3];g.fillRect(a,y.top,b-a,y.bottom-y.top);g.fillStyle=css("--mu");g.font="10px system-ui";g.fillText(p[2],a+2,y.top+11)})}};
+function line(id,series,title,yl,o={}){if(ch[id])ch[id].destroy();ch[id]=new Chart($(id),{type:o.type||"line",plugins:[bands],data:{labels:o.labels||T,datasets:series},options:{bands:!!o.bands,animation:false,aspectRatio:o.ar||2,elements:{point:{radius:0},line:{borderWidth:1.6}},plugins:{title:{display:true,text:title,color:css("--tx")},legend:{display:series.length>1||!!o.leg,labels:{color:css("--tx"),boxWidth:12}}},scales:{x:{ticks:{color:css("--mu"),maxTicksLimit:8},title:{display:!o.noX,text:"Time [s]",color:css("--mu")}},y:{ticks:{color:css("--mu")},title:{display:true,text:yl,color:css("--mu")}}}}})}
+const ds=(d,c,i,sc=1,lab)=>({label:lab||d.name,data:(c=="power_kw"||c=="energy_cum_kj"?d[c]:d.data[c]).map(v=>v*sc),borderColor:COL[i%5],backgroundColor:COL[i%5]});
+// ---- decision matrix
+let cx=D.map((d,i)=>[5,4,2][i]??3),Wt=[40,25,15,20],best=0;
+const WN=["Energy","Dynamics","Pressure stress","Simplicity / cost"];
+function scores(){const en=D.map(d=>d.metrics[EK]),mE=Math.min(...en),R=D.map(d=>d.metrics["Peak rod pressure [bar]"]),mR=Math.min(...R);
+return D.map((d,i)=>{const m=d.metrics,e=(Math.abs(m["Fast-down speed [mm/s]"]-200)/200+Math.abs(m["Working speed [mm/s]"]-10)/10+Math.abs(m["Fast-up speed [mm/s]"]-200)/200)/3,o=(m["Peak downward speed [mm/s]"]-200)/200;return[100*mE/en[i],100*Math.max(0,1-e-.25*o),100*mR/R[i],cx[i]*20]})}
+const tot=(S,W)=>{const s=W.reduce((a,b)=>a+b)||1;return S.map(r=>r.reduce((a,v,j)=>a+v*W[j],0)/s)};
+const arg=a=>a.indexOf(Math.max(...a));
+function wts(){$("wts").innerHTML=WN.map((w,i)=>"<label>"+w+" <input type=range class=w min=0 max=100 value="+Wt[i]+" style='width:110px'></label>").join("");document.querySelectorAll(".w").forEach((e,i)=>e.oninput=()=>{Wt[i]=+e.value;refresh()})}
+function matrix(){const S=scores(),t=tot(S,Wt);best=arg(t);
+$("recbody").innerHTML="<table><tr><th>Circuit</th><th>Energy</th><th>Dynamics</th><th>Pressure</th><th>Simplicity/cost (1–5, judgement)</th><th>Total</th></tr>"+D.map((d,i)=>"<tr><td>"+d.name+"</td>"+S[i].slice(0,3).map(v=>"<td class=n>"+v.toFixed(0)+"</td>").join("")+"<td><input type=number min=1 max=5 value="+cx[i]+" data-i="+i+" style='width:56px'></td><td><div style='background:var(--bd);border-radius:4px'><div style='height:12px;border-radius:4px;background:"+COL[i%5]+";width:"+t[i]+"%'></div></div><b>"+t[i].toFixed(0)+"</b></td></tr>").join("")+"</table><p class=note>Energy = lowest energy ÷ own energy; Dynamics = speed accuracy minus an overshoot penalty (this formula is the team's choice, not a standard); Pressure = lowest peak rod pressure ÷ own. Peak values include model transients.</p>";
+document.querySelectorAll("#recbody input").forEach(e=>e.onchange=()=>{cx[+e.dataset.i]=Math.min(5,Math.max(1,+e.value||3));refresh()});
+const P=[["Balanced",[25,25,25,25]],["Energy-first",[60,15,15,10]],["Dynamics-first",[15,55,15,15]],["Simplicity-first",[15,15,10,60]],["Your sliders",Wt]];
+$("sens").innerHTML="<table><tr><th>Priority set</th><th>Ranking (highest first)</th></tr>"+P.map(p=>{const tt=tot(S,p[1]);return"<tr><td>"+p[0]+"</td><td>"+tt.map((v,i)=>[v,i]).sort((a,b)=>b[0]-a[0]).map(x=>D[x[1]].name.split(" (")[0]+" ("+x[0].toFixed(0)+")").join(" › ")+"</td></tr>"}).join("")+"</table><p class=note>If the leader changes between rows, the conclusion depends on priorities.</p>";return t}
+// ---- recommendation + KPI
+function recs(){const m=D[best].metrics,b0=D[0].metrics[EK],v=D[best].val;
+const hold=Math.abs(m["Hold drift 8.2-10 s [mm]"])<0.05?"≈ 0 mm":F(m["Hold drift 8.2-10 s [mm]"],2)+" mm";
+$("kpis").innerHTML=[["Circuits",D.length],["Selected circuit",D[best].name.split(" (")[0]],["Active-cycle hydraulic energy",F(m[EK])+" kJ"+(D[best].energy_corrected?" *":"")],["Saving vs "+D[0].name.split(" (")[0],F(m["Energy saving vs first circuit [%]"])+" %"+(D[best].energy_corrected?" *":"")],["Peak head pressure",F(m["Peak head pressure [bar]"],0)+" bar"],["Hold drift",hold]].map(x=>"<div class=kpi><span class=note>"+x[0]+"</span><b>"+x[1]+"</b></div>").join("");
+const tr=[];D.forEach((d,i)=>{if(d.metrics[EK]>m[EK])tr.push("")});
+$("rec").innerHTML="<h2>Engineering Recommendation</h2><div class='al ok'>Under the selected weighting assumptions and available simulation results, "+D[best].name+" provides the strongest overall result.</div><div class=kpis style='margin-top:8px'>"+[["Active-cycle energy",F(m[EK])+" kJ"+(D[best].energy_corrected?" *":"")],["Saving vs baseline",F(m["Energy saving vs first circuit [%]"])+" %"],["Peak head pressure",F(m["Peak head pressure [bar]"],0)+" bar"],["Steady working pressure",F(m["Steady working head pressure 5-8 s [bar]"],0)+" bar"],["Working speed",F(m["Working speed [mm/s]"],1)+" mm/s"],["Hold drift",hold],["Validation","Needs review"]].map(x=>"<div class=kpi><span class=note>"+x[0]+"</span><b style='font-size:16px'>"+x[1]+"</b></div>").join("")+"</div><p class=note>"+(D[best].energy_corrected?"* Energy is an unverified Excel value, not computed from the CSV (see below). ":"")+"This recommendation is conditional on validation of the three simulation models and consistent energy calculations. The leader is not best in every category; see the trade-offs.</p>"}
+// ---- comparison
+const G=[["Dynamic response",["Fast-down speed [mm/s]","Working speed [mm/s]","Fast-up speed [mm/s]","Peak downward speed [mm/s]","Position at end of working [mm]","Hold drift 8.2-10 s [mm]","Home reached at [s]"]],["Pressure",["Peak head pressure [bar]","Peak rod pressure [bar]","Peak pump pressure [bar]","Steady working head pressure 5-8 s [bar]"]],["Flow",["Peak pump flow [L/min]"]],["Energy (hydraulic)",[EK,EK2,"Energy saving vs first circuit [%]"]]];
+function cmp(){const t=matrix();recs();$("grp").innerHTML="<table><tr><th>Metric</th>"+D.map(d=>"<th>"+d.name+"</th>").join("")+"</tr>"+G.map(g=>"<tr><td colspan="+(D.length+1)+"><b>"+g[0]+"</b> <span class=note>simulation-derived</span></td></tr>"+g[1].map(k=>"<tr><td>"+k+"</td>"+D.map(d=>"<td class=n>"+d.metrics[k]+(d.energy_corrected&&k.startsWith("Pump hydraulic")||d.energy_corrected&&k.startsWith("Energy saving")?" *":"")+"</td>").join("")+"</tr>").join("")).join("")+"<tr><td colspan="+(D.length+1)+"><b>Judgement-based (team input)</b></td></tr><tr><td>Simplicity / cost (1–5)</td>"+cx.map(v=>"<td class=n>"+v+"</td>").join("")+"</tr></table><p class=note>Peak speed, rod pressure and flow include start-of-motion transients caused by abrupt valve commands in the model (e.g. Circuit 3 peak flow exceeds the pump's rated flow), so compare them with the steady values.<br>* Circuit 2 energy comes from <code>Concept_Comparison.xlsx</code> (made by an AI assistant and not independently verified) because its CSV holds a single pressure for two pumps; computed directly from the CSV it would be "+(D.find(d=>d.energy_corrected)?"about 125 kJ":"")+", which overstates it. The proper fix is exporting each pump's pressure and flow, then P = P_pump1 + P_pump2.</p>";
+$("trade").innerHTML=D.map((d,i)=>{const v=d.val,m=d.metrics,s=[],w=[];s.push("Active-cycle hydraulic energy "+F(m[EK])+" kJ"+(d.energy_corrected?" (unverified)":""));
+if(v.n_pumps==1&&!v.counterbalance)s.push("Fewest components: one fixed pump, relief valve, no counterbalance valve");
+if(v.counterbalance)s.push("Counterbalance valve in the circuit to control the load");
+if(Math.abs(m["Working speed [mm/s]"]-10)<0.3)s.push("Working speed "+F(m["Working speed [mm/s]"],1)+" mm/s vs 10 mm/s target");
+if(v.n_pumps>1)w.push(v.n_pumps+" pumps and extra valves: a more complex circuit");
+if(m[EK]>=Math.min(...D.map(x=>x.metrics[EK]))*2)w.push("Much higher energy than the lowest circuit ("+F(m[EK])+" kJ)");
+w.push("Peak rod pressure "+F(m["Peak rod pressure [bar]"],0)+" bar (includes model transient)");
+return"<p><b>"+d.name+"</b></p><div class=grid2><div><span class=note>Strengths</span><ul>"+s.map(x=>"<li>"+x+"</li>").join("")+"</ul></div><div><span class=note>Weaknesses</span><ul>"+w.map(x=>"<li>"+x+"</li>").join("")+"</ul></div></div>"}).join("")+"<p class=note>Derived from the model files and results; no component counts or prices are claimed.</p>";
+line("en",[{label:EK,data:D.map(d=>d.metrics[EK]),backgroundColor:COL.slice(0,D.length)}],"Active-cycle hydraulic energy [kJ]","kJ",{type:"bar",labels:D.map(d=>d.name.split(" (")[0]+(d.energy_corrected?" *":"")),ar:3,noX:1});
+[["c1","position_mm","Position","mm"],["c2","velocity_mm_s","Speed","mm/s"],["c3","head_pressure_bar","Head-side pressure","bar"],["c4","pump_flow_L_min","Pump flow","L/min"]].forEach(([id,c,t,u])=>line(id,D.map((d,i)=>ds(d,c,i)),t,u,{bands:1,ar:2.6}))}
+// ---- best concept
+let manual=0;
+function best_(){matrix();if(!manual)$("bsel").value=best;const i=+$("bsel").value,d=D[i],m=d.metrics;$("bnote").textContent=(i==best?"Showing the current decision-matrix leader. ":"Manually selected circuit (the matrix leader is "+D[best].name.split(" (")[0]+"). ")+"Choose another circuit to compare.";
+const R=[["Fast-down speed [mm/s]",200,m["Fast-down speed [mm/s]"]],["Working speed [mm/s]",10,m["Working speed [mm/s]"]],["Fast-up speed [mm/s]",200,m["Fast-up speed [mm/s]"]],["Working stroke [mm]",50,m["Working stroke 3.2-8.2 s [mm]"]],["Hold drift [mm]",0,m["Hold drift 8.2-10 s [mm]"]]];
+$("tva").innerHTML="<tr><th>Parameter</th><th>Target</th><th>Simulated</th><th>Deviation</th><th>Status</th></tr>"+R.map(r=>{const dv=r[2]-r[1],st=r[0].startsWith("Hold")?"Requires review (9 t load unconfirmed)":Math.abs(dv)<.05?"Meets target":dv>0?"Above target":"Below target";return"<tr><td>"+r[0]+"</td><td class=n>"+r[1]+"</td><td class=n>"+F(r[2],2)+"</td><td class=n>"+(dv>=0?"+":"")+F(dv,2)+"</td><td>"+st+"</td></tr>"}).join("")+"";
+const tg=T.map(t=>t>=2.3&&t<3?-200:t>=3.6&&t<8?-10:t>=10.4&&t<11.3?200:null);
+line("b1",[ds(d,"position_mm",i)],"Position vs time","mm",{bands:1});
+line("b2",[{...ds(d,"velocity_mm_s",i,1,"Simulated speed"),order:1},{label:"Target speed",data:tg,borderColor:"#e6a100",borderDash:[6,4],borderWidth:2.2,spanGaps:false,order:0}],"Speed vs time (targets: 200 / 10 / 200 mm/s)","mm/s",{bands:1});
+line("b3",[ds(d,"head_pressure_bar",0)],"Head-side pressure","bar",{bands:1,ar:1.6});line("b4",[ds(d,"rod_pressure_bar",1)],"Rod-side pressure","bar",{bands:1,ar:1.6});line("b5",[ds(d,"pump_pressure_bar",3)],"Pump pressure","bar",{bands:1,ar:1.6});
+line("b6",[ds(d,"pump_flow_L_min",4)],"Pump flow vs time","L/min",{bands:1,ar:3});
+const ub=d.energy_corrected;line("b7",[ds(d,"power_kw",2)],"Hydraulic power P = p × Q"+(ub?" (upper bound)":""),"kW",{bands:1,ar:1.6});line("b8",[ds(d,"energy_cum_kj",1)],"Cumulative hydraulic energy"+(ub?" (upper bound)":""),"kJ",{bands:1,ar:1.6});
+$("eint").innerHTML="Hydraulic energy is pressure × flow integrated over time, so it can be reduced by avoiding unnecessary flow, pressure or bypass losses."+(ub?" <b>Note:</b> this circuit's CSV has one pressure for two pumps, so these two curves multiply that pressure by the total flow and overstate the real values (end value "+F(d.energy_cum_kj[d.energy_cum_kj.length-1],0)+" kJ over 14 s versus the Excel-derived "+F(m[EK2])+" kJ, which is itself unverified).":"")}
+// ---- sensors
+function sens(){const d=D[$("cs2").value],i=+$("cs2").value;line("s1",[ds(d,"head_pressure_bar",0,1,"Head p [bar]"),ds(d,"rod_pressure_bar",2,1,"Rod p [bar]"),ds(d,"pump_pressure_bar",3,1,"Pump p [bar]")],"Pressure channels","bar",{ar:1.7});line("s2",[ds(d,"pump_flow_L_min",4,1,"Flow [L/min]"),ds(d,"velocity_mm_s",1,.1,"Speed ÷10 [mm/s]")],"Flow and speed channels (speed scaled ÷10)","value",{ar:1.7})}
+// ---- overview / evidence
+function ovw(){const v0=D[0].val;
+$("req").innerHTML="<tr><td>Bore / rod</td><td>85 mm / 50 mm</td></tr><tr><td>Dead load</td><td>3 t (3000 kg)</td></tr><tr><td>Holding load</td><td>9 t</td></tr><tr><td>Fast down</td><td>200 mm/s for 200 mm</td></tr><tr><td>Working</td><td>10 mm/s for 50 mm</td></tr><tr><td>Holding</td><td>2 s</td></tr><tr><td>Fast up</td><td>200 mm/s</td></tr>";
+const chk=(ok)=>ok?"✓":"?";const rows=[["Source result file",d=>d.csv],["Model file",d=>d.val.found?d.val.file:"not found"],["Bore / rod [mm]",d=>d.val.found?F(d.val.bore_mm,1)+" / "+F(d.val.rod_mm,1)+" "+chk(Math.abs(d.val.bore_mm-85)<.5&&Math.abs(d.val.rod_mm-50)<.5):"–"],["Cylinder stroke [mm]",d=>d.val.found?F(d.val.stroke_mm,0):"–"],["Mass [kg]",d=>d.val.found?d.val.mass_kg+" "+chk(d.val.mass_kg==3000):"–"],["Pump(s) [cc/rev]",d=>d.val.found?d.val.pumps.map(p=>F(p.cc_rev,1)).join(" + ")+" @ "+F(d.val.pumps[0].rpm,0)+" rpm":"–"],["Relief valve [bar]",d=>d.val.found?F(d.val.relief_bar,0):"–"],["Counterbalance valve",d=>d.val.found?(d.val.counterbalance?"yes":"no"):"–"],["Load forces in model",d=>d.val.found&&d.val.forces[0]?"gravity "+F(-d.val.forces[0].base_N,0)+" N, +"+F(d.val.forces[0].pulse_N,0)+" N at "+d.val.forces[0].t0+"–"+d.val.forces[0].t1+" s":"–"],["Cycle duration [s]",d=>d.val.sim_stop_s||"–"],["Phases present",d=>(d.metrics["Fast-down speed [mm/s]"]>150&&d.metrics["Working speed [mm/s]"]>5&&d.metrics["Fast-up speed [mm/s]"]>150)?"yes ✓":"check"],["Validation status",d=>"<b>Needs review</b>"],["Reasons",d=>"<ul>"+d.val.reasons.map(r=>"<li>"+r+"</li>").join("")+"</ul>"]];
+$("val").innerHTML="<tr><th></th>"+D.map(d=>"<th>"+d.name.split(" (")[0]+"</th>").join("")+"</tr>"+rows.map(r=>"<tr><td>"+r[0]+"</td>"+D.map(d=>"<td>"+r[1](d)+"</td>").join("")+"</tr>").join("")+"<tr><td colspan="+(D.length+1)+" class=note>✓ = matches the Group 2 requirement; ? = not matched. Facts are read from the .hmf files and result CSVs by analyze.py.</td></tr>";
+$("files").innerHTML="<tr><th>Circuit</th><th>Hopsan model</th><th>Result CSV</th></tr>"+D.map(d=>"<tr><td>"+d.name+"</td><td>"+d.val.file+"</td><td>"+d.csv+"</td></tr>").join("")+"<tr><td colspan=3 class=note>Also: Concept_Comparison.xlsx (energy reference), analyze.py, dashboard_template.html.</td></tr>"}
+// ---- replay
+const cs=$("cs"),sl=$("sl"),playBtn=$("play"),FRAMES=281,SIM_DUR=14;
+const phase=t=>t<2?"Idle":t<3?"Fast down":t<8.1?"Working":t<10?"Holding":t<11.35?"Fast up":"Idle";
+function cyc(){const d=D[cs.value];if(ch.cyc)ch.cyc.destroy();ch.cyc=new Chart($("cyc"),{type:"line",plugins:[bands],data:{labels:T,datasets:[ds(d,"position_mm",+cs.value,1,"Position [mm]")]},options:{bands:true,animation:false,aspectRatio:2.2,elements:{point:{radius:0},line:{borderWidth:1.8}},plugins:{legend:{display:false},title:{display:true,text:"Stroke cycle with phases",color:css("--tx")}},scales:{x:{ticks:{color:css("--mu"),maxTicksLimit:8}},y:{ticks:{color:css("--mu")},title:{display:true,text:"mm",color:css("--mu")}}}}});upd()}
+function upd(){const d=D[cs.value],i=Math.max(0,Math.min(Math.floor(+sl.value),FRAMES-1)),p=d.data,t=T[i]??0;$("tt").textContent=t.toFixed(1)+" s";$("ram").style.top=(-p.position_mm[i]/300*174)+"px";$("ph").textContent="Phase: "+phase(t);
+const L=[["Position",p.position_mm[i],"mm"],["Speed",p.velocity_mm_s[i],"mm/s"],["Head p",p.head_pressure_bar[i],"bar"],["Rod p",p.rod_pressure_bar[i],"bar"],["Pump p",p.pump_pressure_bar[i],"bar"],["Flow",p.pump_flow_L_min[i],"L/min"],["Power",d.power_kw[i],"kW"+(d.energy_corrected?" (upper bound)":"")],["Energy so far",d.energy_cum_kj[i],"kJ"+(d.energy_corrected?" (upper bound)":"")]];
+$("live").innerHTML=L.map(x=>"<div><div class=note>"+x[0]+"</div><b>"+F(x[1],1)+"</b> "+x[2]+"</div>").join("")}
+let rafId=null,playing=false,lastTs=null;
+const msPerFrame=(SIM_DUR/(FRAMES-1))*1000;
+function stopAnim(){if(rafId){cancelAnimationFrame(rafId);rafId=null}playing=false;lastTs=null}
+function startAnim(){
+  if(playing)return;
+  if(+sl.value>=FRAMES-1){sl.value=0;upd()}
+  playing=true;lastTs=null;playBtn.textContent="⏸ Pause";
+  const step=ts=>{
+    if(!playing)return;
+    if(lastTs===null)lastTs=ts;
+    const dt=Math.min(ts-lastTs,100);lastTs=ts;
+    const next=Math.min(+sl.value+dt/msPerFrame,FRAMES-1);
+    sl.value=next;upd();
+    if(next>=FRAMES-1){stopAnim();playBtn.textContent="↺ Replay";return}
+    rafId=requestAnimationFrame(step);
+  };
+  rafId=requestAnimationFrame(step);
+}
+playBtn.onclick=function(){
+  if(playing){stopAnim();this.textContent="▶ Play";return}
+  if(this.textContent.includes("Replay")||+sl.value>=FRAMES-1){sl.value=0;upd()}
+  startAnim();
+};
+sl.oninput=function(){upd();if(!playing){playBtn.textContent=(+sl.value>=FRAMES-1)?"↺ Replay":"▶ Play"}};
+cs.onchange=function(){stopAnim();playBtn.textContent="▶ Play";sl.value=0;cyc()};
+$("cs2").onchange=sens;$("bsel").onchange=()=>{manual=1;best_()};
+// ---- anomaly
+function rng(s){return()=>(s=(s*16807)%2147483647)/2147483647}
+const CH=[["head_pressure_bar","Head pressure",1],["rod_pressure_bar","Rod pressure",1],["pump_pressure_bar","Pump pressure",1],["pump_flow_L_min","Pump flow",.3],["velocity_mm_s","Speed",1.5]];
+const IND={head_pressure_bar:"a head-side abnormality (e.g. leakage or extra friction)",rod_pressure_bar:"a rod-side or counterbalance-valve abnormality",pump_pressure_bar:"a relief-valve or pump abnormality",pump_flow_L_min:"a pump flow loss (e.g. wear or internal leakage)",velocity_mm_s:"a motion abnormality (e.g. sticking or friction)"};
+function apply(f,k,c,v,t){if(f=="leak"&&c=="head_pressure_bar"&&t>=3&&t<10)return v*(1-k*.006*(t-3));if(f=="wear"&&c=="pump_flow_L_min"&&t>=2)return v*(1-k*.02);if(f=="wear"&&c=="velocity_mm_s"&&t>=2&&(t<3||t>=10))return v*(1-k*.02);if(f=="fric"&&c=="head_pressure_bar"&&t>=3&&t<8.1)return v+k*2.5;return v}
+function anom(){const d=D[$("cs3").value],f=$("fs").value,k=+$("lk").value,r=rng(42),n=()=>{let u=0;for(let j=0;j<6;j++)u+=r();return(u-3)*1.41};$("lkv").textContent=k?k+"/10":"none";
+const meas={},z=CH.map(([c,,s])=>{const ref=d.data[c];meas[c]=ref.map((v,i)=>apply(f,k,c,v,T[i])+n()*s);return meas[c].map((m,i)=>(m-ref[i])/s)});
+const sc=T.map((_,i)=>Math.sqrt(z.reduce((a,q)=>a+q[i]*q[i],0)/CH.length)),thr=3;let run=0,first=-1;const flag=sc.map((x,i)=>{run=x>thr?run+1:0;if(run==5&&first<0)first=i-4;return run>=5});
+const lo=first>=0?first:T.findIndex(v=>v>=2),hi=first>=0?first+20:T.findIndex(v=>v>=11.35),ctr=z.map(q=>{let a=0,m=0;for(let i=lo;i<hi;i++){a+=q[i]*q[i];m++}return a/m}),top=ctr.indexOf(Math.max(...ctr));
+const el=$("alert");if(first>=0){el.className="al bad";el.textContent="⚠ Anomaly detected at "+T[first].toFixed(2)+" s. Most deviating signal: "+CH[top][1]+". This behaviour is indicative of "+IND[CH[top][0]]+" and requires physical diagnosis.";$("dt").textContent="Detection time: "+T[first].toFixed(2)+" s (fault starts at "+(f=="wear"?"2.0":"3.0")+" s); threshold = score above "+thr+" for 5 consecutive samples."}else{el.className="al ok";el.textContent="No anomaly – combined residual stays within the normal band";$("dt").textContent="Threshold = score above "+thr+" for 5 consecutive samples."}
+const sig=f=="wear"?"pump_flow_L_min":"head_pressure_bar",nm=CH.find(x=>x[0]==sig)[1];
+line("an",[{label:"Normal reference",data:d.data[sig],borderColor:"#888",backgroundColor:"#888"},{label:"Faulted signal (synthetic fault + noise)",data:meas[sig],borderColor:"#d62728",backgroundColor:"#d62728"}],nm+": normal vs faulted",sig.includes("flow")?"L/min":"bar");
+line("an2",[{label:"Residual / anomaly score",data:sc,borderColor:COL[1],backgroundColor:COL[1]},{label:"Flagged",data:flag.map((x,i)=>x?sc[i]:null),borderColor:"#d62728",backgroundColor:"#d62728",pointRadius:3,showLine:false},{label:"Threshold",data:sc.map(()=>thr),borderColor:"#888",borderDash:[4,4],borderWidth:1}],"Combined residual score (5 channels, noise-normalised)","score");
+line("an3",[{label:"Mean squared deviation",data:ctr,backgroundColor:CH.map((_,i)=>i==top&&first>=0?"#d62728":"#888")}],"Which signal deviates most","(noise units)²",{type:"bar",labels:CH.map(x=>x[1]),ar:3,noX:1})}
+$("cs3").onchange=anom;$("fs").onchange=anom;$("lk").oninput=anom;
+function refresh(){const t=matrix();recs();if($("t1").classList.contains("on"))cmp();if($("t2").classList.contains("on")){best_()}}
+wts();matrix();recs();ovw();$("bsel").value=best;show(0);
+</script></main></body></html>
